@@ -1,0 +1,57 @@
+# issue: #409
+# origin_layer: Client
+# exposure_channel: caller-exception
+# evidence_class: caller-exception
+# evidence_tier: A
+# evidence_source: runtime
+# harness_entry: issue_0409.py::repro_0409
+# console_log: logs/409.txt
+# raw_payload: not retained
+
+## 1. What was run
+
+Harness entry: `issue_0409.py::repro_0409`
+
+Trigger, as recorded during the study:
+
+```text
+A custom streamable-http server returns 200 + Content-Type:application/json for tools/list but the body is not JSON ('Error: type error in handler')
+```
+
+## 2. What the reporter described
+
+The client parses a response body marked application/json that is actually not JSON, throwing MCPError: Failed to parse JSON response (the original issue was a bare SyntaxError, which has been wrapped as MCPError in 2.2.0)
+
+## 3. What we captured
+
+Captured in our run (evidence tier A).
+
+```
+list_tools RAISED:MCPError:Failed to parse JSON response: 1 validation error ... Invalid JSON: expected value at line 1 column 1 [input_value=b'Error: type error in handler']
+```
+
+## 4. Why it happens
+
+The server returns 200 + `Content-Type: application/json` for tools/list, but the body is actually non-JSON (`Error: type error in handler`). Client parsing fails and is wrapped as `MCPError: Failed to parse JSON response` in 2.2.0 (the original issue was a bare SyntaxError). The non-JSON response body causes a client-side parsing error that is exposed to the caller — a caller-exception.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Client |
+| Exposure channel | `caller-exception` |
+| Evidence class | `caller-exception` |
+| Evidence tier | A |
+| Error text came from | runtime |
+| Harness entry | `issue_0409.py::repro_0409` |
+| Console log retained | yes (`logs/409.txt`) |
+| Raw payload retained | no |
+
+## B. Raw console log (logs/409.txt)
+
+```
+client entered
+list_tools RAISED:MCPError:Failed to parse JSON response: 1 validation error for union[JSONRPCRequest,JSONRPCNotification,JSONRPCResponse,JSONRPCError]
+  Invalid JSON: expected value at line 1 column 1 [type=json_invalid, input_value=b'Error: type error in handler', input_type=bytes]
+    For further information visit https://errors.pydantic.dev/2.12/v/json_invalid
+```

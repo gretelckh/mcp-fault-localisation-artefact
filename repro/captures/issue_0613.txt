@@ -1,0 +1,55 @@
+# issue: #613
+# origin_layer: Transport
+# exposure_channel: caller-exception
+# evidence_class: caller-exception
+# evidence_tier: A
+# evidence_source: runtime
+# harness_entry: issue_0613.py::repro_0613
+# console_log: logs/613.txt
+# raw_payload: not retained
+
+## 1. What was run
+
+Harness entry: `issue_0613.py::repro_0613`
+
+Trigger, as recorded during the study:
+
+```text
+sse_client('http://127.0.0.1:9211/sse') connects to an SSE endpoint that returns 401
+```
+
+## 2. What the reporter described
+
+When connecting via SSE, the endpoint returns 401 (authentication failed), mcp sse_client throws HTTPStatusError, and connection establishment fails
+
+## 3. What we captured
+
+Captured in our run (evidence tier A).
+
+```
+RAISED:HTTPStatusError:Client error '401 Unauthorized' for url 'http://127.0.0.1:9211/sse'
+```
+
+## 4. Why it happens
+
+When the SSE client connection is being established, the endpoint returns 401 (authentication failure); the client directly throws `HTTPStatusError` instead of triggering authentication / converting to an MCP error, exposing a bare exception to the caller, a Transport/HTTP authentication defect.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Transport |
+| Exposure channel | `caller-exception` |
+| Evidence class | `caller-exception` |
+| Evidence tier | A |
+| Error text came from | runtime |
+| Harness entry | `issue_0613.py::repro_0613` |
+| Console log retained | yes (`logs/613.txt`) |
+| Raw payload retained | no |
+
+## B. Raw console log (logs/613.txt)
+
+```
+RAISED:HTTPStatusError:Client error '401 Unauthorized' for url 'http://127.0.0.1:9211/sse'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+```

@@ -1,0 +1,66 @@
+# issue: #3640
+# origin_layer: Server
+# exposure_channel: silent
+# evidence_class: silent
+# evidence_tier: D
+# evidence_source: none
+# harness_entry: run_real_http.py::b_capabilities_drop
+# console_log: not retained
+# raw_payload: raw/real_r_capabilities_drop.txt
+
+## 1. What was run
+
+Harness entry: `run_real_http.py::b_capabilities_drop`
+
+Trigger, as recorded during the study:
+
+```text
+call_tool(ping, {})
+```
+
+## 2. What the reporter described
+
+unknown ServerCapabilities keys are dropped from the advertised capabilities [bug #3640]
+
+## 3. What we captured
+
+No error was raised (evidence tier D). The call finished; the defect shows up in
+what came back, not in a diagnostic:
+
+```
+is_error=False
+advertised_capabilities=experimental=None logging=None prompts=PromptsCapability(list_changed=True) resources=ResourcesCapability(subscribe=True, list_changed=True) tools=ToolsCapability(list_changed=True) completions=None extensions=None tasks=None
+```
+
+## 4. Why it happens
+
+An unknown ServerCapabilities key is silently discarded when advertising capabilities (is_error=False). Capability information is lost with no error reported — a silent failure.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Server |
+| Exposure channel | `silent` |
+| Evidence class | `silent` |
+| Evidence tier | D |
+| Error text came from | none |
+| Harness entry | `run_real_http.py::b_capabilities_drop` |
+| Console log retained | no |
+| Raw payload retained | yes (`raw/real_r_capabilities_drop.txt`) |
+
+## A. Harness progress record
+
+Last record written by the runner for this bug. It is a *runtime trace*, not the
+defect evidence: a bug whose last call returned normally still has an entry here.
+
+```
+verified (run_real_http*.py) - see real_r_capabilities_drop.txt
+```
+
+## C. Raw payload (raw/real_r_capabilities_drop.txt)
+
+```
+is_error=False
+advertised_capabilities=experimental=None logging=None prompts=PromptsCapability(list_changed=True) resources=ResourcesCapability(subscribe=True, list_changed=True) tools=ToolsCapability(list_changed=True) completions=None extensions=None tasks=None
+```

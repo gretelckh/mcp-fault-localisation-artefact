@@ -1,0 +1,67 @@
+# issue: #3643
+# origin_layer: Server
+# exposure_channel: silent
+# evidence_class: silent
+# evidence_tier: D
+# evidence_source: none
+# harness_entry: run_real_http.py::b_userlist_prompt
+# console_log: not retained
+# raw_payload: raw/real_r_userlist_prompt.txt
+
+## 1. What was run
+
+Harness entry: `run_real_http.py::b_userlist_prompt`
+
+Trigger, as recorded during the study:
+
+```text
+call_tool(greet, {'name': 'bob'})
+```
+
+## 2. What the reporter described
+
+prompt handler returning UserList is rendered as ONE stringified message [bug #3643]
+
+## 3. What we captured
+
+No error was raised (evidence tier D). The call finished; the defect shows up in
+what came back, not in a diagnostic:
+
+```
+is_error=False
+meta={'io.modelcontextprotocol/serverInfo': {'name': 'real-ulist', 'version': ''}} description='' messages=[PromptMessage(role='user', content=TextContent(type='text', text='"[PromptMessage(role=\'user\', content=TextContent(type=\'text\', text=\'hi bob\', annotations=None, meta=None)
+```
+
+## 4. Why it happens
+
+The prompt handler returns a UserList, which is rendered as a single stringified message (is_error=False). The erroneous result structure is treated as a success — a silent failure.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Server |
+| Exposure channel | `silent` |
+| Evidence class | `silent` |
+| Evidence tier | D |
+| Error text came from | none |
+| Harness entry | `run_real_http.py::b_userlist_prompt` |
+| Console log retained | no |
+| Raw payload retained | yes (`raw/real_r_userlist_prompt.txt`) |
+
+## A. Harness progress record
+
+Last record written by the runner for this bug. It is a *runtime trace*, not the
+defect evidence: a bug whose last call returned normally still has an entry here.
+
+```
+verified (run_real_http*.py) - see real_r_userlist_prompt.txt
+```
+
+## C. Raw payload (raw/real_r_userlist_prompt.txt)
+
+```
+is_error=False
+meta={'io.modelcontextprotocol/serverInfo': {'name': 'real-ulist', 'version': ''}} description='' messages=[PromptMessage(role='user', content=TextContent(type='text', text='"[PromptMessage(role=\'user\', content=TextContent(type=\'text\', text=\'hi bob\', annotations=None, meta=None))]"', annotations=None, meta=None))] result_type='complete'
+[stringified PromptMessage rendered as one message]
+```

@@ -1,0 +1,65 @@
+# issue: #3557
+# origin_layer: Transport
+# exposure_channel: caller-exception
+# evidence_class: caller-exception
+# evidence_tier: A
+# evidence_source: issue text
+# harness_entry: repro_cases.py::case_jsonrpc_code
+# console_log: not retained
+# raw_payload: raw/real_r_jsonrpc_error_code.txt
+
+## 1. What was run
+
+Harness entry: `repro_cases.py::case_jsonrpc_code`
+
+Trigger, as recorded during the study:
+
+```text
+call_tool(jsonrpc, {})
+```
+
+## 2. What the reporter described
+
+malformed (non-JSON-RPC) body answered with -32602 instead of -32600 [bug #3557]
+
+## 3. What we captured
+
+Quoted from the issue report; our replay did not raise it again (evidence tier A).
+
+```
+status=400
+{"jsonrpc":"2.0","id":null,"error":{"code":-32602,"message":"Validation error: 4 validation errors for union[JSONRPCRequest,JSONRPCNotification,JSONRPCResponse,JSONRPCError]\nJSONRPCRequest\n  Input should be a valid dictionary or instance
+```
+
+## 4. Why it happens
+
+A malformed non-JSON-RPC body is answered with `-32602` (should be `-32600`), a bare HTTP 400 exception. It is an error-code spec issue, exposed as a bare exception to the caller.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Transport |
+| Exposure channel | `caller-exception` |
+| Evidence class | `caller-exception` |
+| Evidence tier | A |
+| Error text came from | issue text |
+| Harness entry | `repro_cases.py::case_jsonrpc_code` |
+| Console log retained | no |
+| Raw payload retained | yes (`raw/real_r_jsonrpc_error_code.txt`) |
+
+## A. Harness progress record
+
+Last record written by the runner for this bug. It is a *runtime trace*, not the
+defect evidence: a bug whose last call returned normally still has an entry here.
+
+```
+verified (run_real_http*.py) - see real_r_jsonrpc_error_code.txt
+```
+
+## C. Raw payload (raw/real_r_jsonrpc_error_code.txt)
+
+```
+status=400
+{"jsonrpc":"2.0","id":null,"error":{"code":-32602,"message":"Validation error: 4 validation errors for union[JSONRPCRequest,JSONRPCNotification,JSONRPCResponse,JSONRPCError]\nJSONRPCRequest\n  Input should be a valid dictionary or instance
+```

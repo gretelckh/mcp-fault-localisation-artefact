@@ -1,0 +1,56 @@
+# issue: #577
+# origin_layer: Client
+# exposure_channel: caller-exception
+# evidence_class: caller-exception
+# evidence_tier: A
+# evidence_source: runtime
+# harness_entry: issue_0577.py::repro_0577
+# console_log: logs/577.txt
+# raw_payload: not retained
+
+## 1. What was run
+
+Harness entry: `issue_0577.py::repro_0577`
+
+Trigger, as recorded during the study:
+
+```text
+After 4 Clients connect, cleanup occurs out of order across tasks, with sequence [2,0,3,1] not LIFO
+```
+
+## 2. What the reporter described
+
+When multiple MCPClient instances are cleaned up out of order, the transport's cancel scope management across tasks fails, throwing CancelledError: Cancelled by cancel scope
+
+## 3. What we captured
+
+Captured in our run (evidence tier A).
+
+```
+RUN EXC: CancelledError: Cancelled by cancel scope
+```
+
+## 4. Why it happens
+
+Multiple MCPClient instances are cleaned up out of order across tasks (order not LIFO), cancel scope ownership becomes confused, throwing `CancelledError: Cancelled by cancel scope`. Exposed to the caller as a bare exception, a caller-exception.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Client |
+| Exposure channel | `caller-exception` |
+| Evidence class | `caller-exception` |
+| Evidence tier | A |
+| Error text came from | runtime |
+| Harness entry | `issue_0577.py::repro_0577` |
+| Console log retained | yes (`logs/577.txt`) |
+| Raw payload retained | no |
+
+## B. Raw console log (logs/577.txt)
+
+```
+4 clients connected OK
+scenario=out-of-order cross-task cleanup [2,0,3,1]
+RUN EXC: CancelledError: Cancelled by cancel scope 140d930aa40
+```

@@ -1,0 +1,56 @@
+# issue: #2216
+# origin_layer: Client
+# exposure_channel: single-layer-correct
+# evidence_class: single-layer-correct
+# evidence_tier: A
+# evidence_source: runtime
+# harness_entry: issue_2216.py::repro_2216
+# console_log: logs/2216.txt
+# raw_payload: not retained
+
+## 1. What was run
+
+Harness entry: `issue_2216.py::repro_2216`
+
+Trigger, as recorded during the study:
+
+```text
+OAuthClientInformationFull(client_id='c', scope=None).validate_scope('read')
+```
+
+## 2. What the reporter described
+
+validate_scope incorrectly rejects any request when the client has no registered scope (None): validate_scope(None, 'read') throws InvalidScopeError: Client was not registered with scope read.
+
+## 3. What we captured
+
+Captured in our run (evidence tier A).
+
+```
+validate_scope(scope=None, req='read') -> RAISED InvalidScopeError: Client was not registered with scope read
+```
+
+## 4. Why it happens
+
+`validate_scope` incorrectly rejects any request when the client has no registered scope (None): `validate_scope(None, 'read')` throws `InvalidScopeError: Client was not registered with scope read`. When there are no required scopes, the request should be allowed; this logic defect causes legitimate requests to be rejected — a single-layer logic defect.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Client |
+| Exposure channel | `single-layer-correct` |
+| Evidence class | `single-layer-correct` |
+| Evidence tier | A |
+| Error text came from | runtime |
+| Harness entry | `issue_2216.py::repro_2216` |
+| Console log retained | yes (`logs/2216.txt`) |
+| Raw payload retained | no |
+
+## B. Raw console log (logs/2216.txt)
+
+```
+VERDICT=REPRO
+CATEGORY=single-layer
+validate_scope(scope=None, req="read") -> RAISED InvalidScopeError: Client was not registered with scope read
+```

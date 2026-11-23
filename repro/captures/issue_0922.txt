@@ -1,0 +1,60 @@
+# issue: #922
+# origin_layer: Client
+# exposure_channel: caller-exception
+# evidence_class: caller-exception
+# evidence_tier: A
+# evidence_source: runtime
+# harness_entry: issue_0922.py::repro_0922
+# console_log: logs/922.txt
+# raw_payload: not retained
+
+## 1. What was run
+
+Harness entry: `issue_0922.py::repro_0922`
+
+Trigger, as recorded during the study:
+
+```text
+Create 4 Client sessions in a task group, then close each in 4 separate tasks
+```
+
+## 2. What the reporter described
+
+When multiple client sessions are created in a task group and closed in separate tasks, cancel scope ownership becomes confused, throwing RuntimeError: Attempted to exit cancel scope in a different task
+
+## 3. What we captured
+
+Captured in our run (evidence tier A).
+
+```
+RAISED:RuntimeError:Attempted to exit cancel scope in a different task than it was entered in
+```
+
+## 4. Why it happens
+
+When multiple client sessions are created in a task group and closed in separate tasks, cancel scope ownership gets confused and `RuntimeError: Attempted to exit cancel scope in a different task than it was entered in` is thrown. Exposed to the caller as a bare exception — a caller-exception.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Client |
+| Exposure channel | `caller-exception` |
+| Evidence class | `caller-exception` |
+| Evidence tier | A |
+| Error text came from | runtime |
+| Harness entry | `issue_0922.py::repro_0922` |
+| Console log retained | yes (`logs/922.txt`) |
+| Raw payload retained | no |
+
+## B. Raw console log (logs/922.txt)
+
+```
+4 clients connected OK
+scenario=create sessions in one task, close them in separate tasks
+created 4 sessions in a task group
+  RAISED:RuntimeError:Attempted to exit cancel scope in a different task than it was entered in
+  RAISED:RuntimeError:Attempted to exit cancel scope in a different task than it was entered in
+  RAISED:RuntimeError:Attempted to exit cancel scope in a different task than it was entered in
+  RAISED:RuntimeError:Attempted to exit cancel scope in a different task than it was entered in
+```

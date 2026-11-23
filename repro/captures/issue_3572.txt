@@ -1,0 +1,63 @@
+# issue: #3572
+# origin_layer: Host
+# exposure_channel: pushed-to-Server
+# evidence_class: pushed-to-server
+# evidence_tier: A
+# evidence_source: issue text
+# harness_entry: run_real_http.py::b_validation_echo
+# console_log: not retained
+# raw_payload: raw/real_r_validation_echo_input.txt
+
+## 1. What was run
+
+Harness entry: `run_real_http.py::b_validation_echo`
+
+Trigger, as recorded during the study:
+
+```text
+call_tool(lookup, {'name': 12345})
+```
+
+## 2. What the reporter described
+
+Host passes wrong arg type; validation error echoes rejected value [bug #3572]
+
+## 3. What we captured
+
+Quoted from the issue report; our replay did not raise it again (evidence tier A).
+
+```
+meta={'io.modelcontextprotocol/serverInfo': {'name': 'real-val', 'version': ''}} content=[TextContent(type='text', text='Error executing tool lookup: 1 validation error for lookupArguments\nname\n  Input should be a valid string [type=string_type, input_value=12345, input_type=int]\n    For further
+```
+
+## 4. Why it happens
+
+The Host passes the wrong parameter type (a number instead of a string), and the Server validation error echoes the rejected value `Error executing tool lookup`. It originates in Host but is reported at the Server layer, a layer mismatch (the validation error is pushed to the Server layer).
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Host |
+| Exposure channel | `pushed-to-Server` |
+| Evidence class | `pushed-to-server` |
+| Evidence tier | A |
+| Error text came from | issue text |
+| Harness entry | `run_real_http.py::b_validation_echo` |
+| Console log retained | no |
+| Raw payload retained | yes (`raw/real_r_validation_echo_input.txt`) |
+
+## A. Harness progress record
+
+Last record written by the runner for this bug. It is a *runtime trace*, not the
+defect evidence: a bug whose last call returned normally still has an entry here.
+
+```
+verified (run_real_http*.py) - see real_r_validation_echo_input.txt
+```
+
+## C. Raw payload (raw/real_r_validation_echo_input.txt)
+
+```
+meta={'io.modelcontextprotocol/serverInfo': {'name': 'real-val', 'version': ''}} content=[TextContent(type='text', text='Error executing tool lookup: 1 validation error for lookupArguments\nname\n  Input should be a valid string [type=string_type, input_value=12345, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_type', annotations=None, meta=None)] structured_content=None is_error=True result_type='complete'
+```

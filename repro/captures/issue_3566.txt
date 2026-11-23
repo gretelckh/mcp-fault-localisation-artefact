@@ -1,0 +1,58 @@
+# issue: #3566
+# origin_layer: Client
+# exposure_channel: single-layer-correct
+# evidence_class: single-layer-correct
+# evidence_tier: A
+# evidence_source: runtime
+# harness_entry: issue_3566.py::repro_3566
+# console_log: logs/3566.txt
+# raw_payload: not retained
+
+## 1. What was run
+
+Harness entry: `issue_3566.py::repro_3566`
+
+Trigger, as recorded during the study:
+
+```text
+union_scopes('read','read,write') and validate_scope(scope='read,write', req='read')
+```
+
+## 2. What the reporter described
+
+RFC 6749 separates scopes with spaces, but real authorization servers (such as Linear) return them comma-separated. union_scopes/validate_scope split by spaces, treating 'read,write' as a single scope, causing validation to fail
+
+## 3. What we captured
+
+Captured in our run (evidence tier A).
+
+```
+union_scopes('read','read,write') -> 'read read,write' (Expected 'read write'); validate_scope(scope='read,write', req='read') -> RAISED InvalidScopeError
+```
+
+## 4. Why it happens
+
+RFC 6749 separates scopes with spaces, but real authorization servers (e.g. Linear) return them comma-separated. `union_scopes`/`validate_scope` split on spaces, treating `read,write` as a single scope, which causes validation failures/merge errors — a single-layer logic defect.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Client |
+| Exposure channel | `single-layer-correct` |
+| Evidence class | `single-layer-correct` |
+| Evidence tier | A |
+| Error text came from | runtime |
+| Harness entry | `issue_3566.py::repro_3566` |
+| Console log retained | yes (`logs/3566.txt`) |
+| Raw payload retained | no |
+
+## B. Raw console log (logs/3566.txt)
+
+```
+VERDICT=REPRO
+CATEGORY=single-layer
+union_scopes("read", "read,write") -> "read read,write"
+Expected: "read write" (split comma); Actual: "read read,write" (comma kept)
+validate_scope(scope="read,write", req="read") -> RAISED InvalidScopeError: Client was not registered with scope read
+```

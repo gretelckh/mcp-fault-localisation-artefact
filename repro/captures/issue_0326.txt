@@ -1,0 +1,95 @@
+# issue: #326
+# origin_layer: Host
+# exposure_channel: caller-exception
+# evidence_class: caller-exception
+# evidence_tier: A
+# evidence_source: runtime
+# harness_entry: issue_0326.py::run
+# console_log: not retained
+# raw_payload: raw/real_326.txt
+
+## 1. What was run
+
+Harness entry: `issue_0326.py::run`
+
+Trigger code:
+
+```python
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+server_params = StdioServerParameters(
+        command="npx",
+        args=["-y", "@modelcontextprotocol/server-filesystem", "/home"],
+        env={} # fail
+        # env=None # no fail
+)
+
+async def run():
+        async with stdio_client(server_params) as (read, write):
+                async with ClientSession(read, write) as session:
+                        await session.initialize()
+                        tools = await session.list_tools()
+
+if __name__ == "__main__":
+        import asyncio
+        asyncio.run(run())
+```
+
+## 2. What the reporter described
+
+Mechanically replaying the python snippet in the issue body -> hits the issue's own error
+
+## 3. What we captured
+
+Captured in our run (evidence tier A).
+
+```
+MCPError: Connection closed
+---
+lize
+      |     result = await self.send_request(
+      |              ^^^^^^^^^^^^^^^^^^^^^^^^
+      |     ...<9 lines>...
+      |     )
+      |     ^
+      |   File "<python-env>\Lib\site-packages\mcp\client\session.py", line 586, in send_request
+      |     raw = await self._dispatcher.send_raw_request(method, data.get("params"), opts)
+      |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      |   File "<python-env>\Lib\site-packages\mcp\shared\jsonrpc_dispatcher.py", line 444, in send_raw_request
+      |     raise MCPError(code=outcome.code, message=outcome.message, data=outcome.data)
+      | mcp.shared.exceptions.MCPError: Connection closed
+      +------------------------------------
+```
+
+## 4. Why it happens
+
+When `env` is set to non-None (e.g. `{}`), the child process loses PATH, npx fails to start, and the SDK only throws `MCPError: Connection closed` at `jsonrpc_dispatcher.send_raw_request`, swallowing the real cause (child process startup failure). The symptom is reproducible, and the root cause is that env overrides the entire environment — a caller-exception.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Host |
+| Exposure channel | `caller-exception` |
+| Evidence class | `caller-exception` |
+| Evidence tier | A |
+| Error text came from | runtime |
+| Harness entry | `issue_0326.py::run` |
+| Console log retained | no |
+| Raw payload retained | yes (`raw/real_326.txt`) |
+
+## A. Harness progress record
+
+Last record written by the runner for this bug. It is a *runtime trace*, not the
+defect evidence: a bug whose last call returned normally still has an entry here.
+
+```
+meta={'io.modelcontextprotocol/serverInfo': {'name': 'real-326', 'version': ''}} content=[TextContent(type='text', text='pong', annotations=None, meta=None)] structured_content={'result': 'pong'} is_error=False result_type='complete'
+```
+
+## C. Raw payload (raw/real_326.txt)
+
+```
+meta={'io.modelcontextprotocol/serverInfo': {'name': 'real-326', 'version': ''}} content=[TextContent(type='text', text='pong', annotations=None, meta=None)] structured_content={'result': 'pong'} is_error=False result_type='complete'
+```

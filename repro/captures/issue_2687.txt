@@ -1,0 +1,60 @@
+# issue: #2687
+# origin_layer: Client
+# exposure_channel: single-layer-correct
+# evidence_class: single-layer-correct
+# evidence_tier: D
+# evidence_source: none
+# harness_entry: issue_2687.py::repro_2687
+# console_log: logs/2687.txt
+# raw_payload: not retained
+
+## 1. What was run
+
+Harness entry: `issue_2687.py::repro_2687`
+
+Trigger, as recorded during the study:
+
+```text
+OAuthClientInformationFull(redirect_uris=[AnyUrl('https://x/cb')]) compared with [AnyHttpUrl('https://x/cb')]
+```
+
+## 2. What the reporter described
+
+redirect_uris is declared as list[AnyUrl], but when a pydantic AnyHttpUrl subtype is passed in, the equality comparison fails (AnyUrl != AnyHttpUrl), breaking the round-trip
+
+## 3. What we captured
+
+No error was raised (evidence tier D). The call finished; the defect shows up in
+what came back, not in a diagnostic:
+
+```
+a.redirect_uris==b.redirect_uris : False; a==b : False
+```
+
+## 4. Why it happens
+
+`OAuthClientInformationFull.redirect_uris` is declared as `list[AnyUrl]`, but equality comparison fails when a pydantic `AnyHttpUrl` subtype is passed in (`AnyUrl('https://x') != AnyHttpUrl('https://x')`), breaking round-trip and downstream checks — a single-layer logic defect.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Client |
+| Exposure channel | `single-layer-correct` |
+| Evidence class | `single-layer-correct` |
+| Evidence tier | D |
+| Error text came from | none |
+| Harness entry | `issue_2687.py::repro_2687` |
+| Console log retained | yes (`logs/2687.txt`) |
+| Raw payload retained | no |
+
+## B. Raw console log (logs/2687.txt)
+
+```
+VERDICT=REPRO
+CATEGORY=single-layer
+a.redirect_uris=[AnyUrl('https://x/cb')]
+b.redirect_uris=[AnyHttpUrl('https://x/cb')]
+a.redirect_uris == b.redirect_uris : False
+a == b : False
+```

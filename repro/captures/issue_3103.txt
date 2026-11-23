@@ -1,0 +1,76 @@
+# issue: #3103
+# origin_layer: Client
+# exposure_channel: single-layer-genericised
+# evidence_class: single-layer-masked
+# evidence_tier: B
+# evidence_source: runtime
+# harness_entry: issue_3103.py::repro_3103
+# console_log: logs/3103.txt
+# raw_payload: not retained
+
+## 1. What was run
+
+Harness entry: `issue_3103.py::repro_3103`
+
+Trigger, as recorded during the study:
+
+```text
+Check that mcp.server.auth.middleware.bearer_auth._send_auth_error constructs WWW-Authenticate
+```
+
+## 2. What the reporter described
+
+When RequireAuthMiddleware's _send_auth_error constructs WWW-Authenticate, it includes only error/error_description (optionally resource_metadata) and never the scope= parameter required by RFC 6750, so the client cannot determine the scope required for re-authorization from the challenge.
+
+## 3. What we captured
+
+Captured in our run (evidence tier B).
+
+```
+_send_auth_error: www_auth_parts=[error, error_description(, resource_metadata)] -> Bearer ...; the scope= parameter is missing
+```
+
+## 4. Why it happens
+
+When `RequireAuthMiddleware._send_auth_error` constructs `WWW-Authenticate`, it includes only error/error_description (optionally resource_metadata) and never the `scope=` parameter required by RFC 6750 §3; the client cannot learn the required scope when re-authorizing from the challenge, so the step-up authorization scope is downgraded. It is reported at the Server layer (the correct layer), but the challenge information is downgraded — a single-layer generalization/masking.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Client |
+| Exposure channel | `single-layer-genericised` |
+| Evidence class | `single-layer-masked` |
+| Evidence tier | B |
+| Error text came from | runtime |
+| Harness entry | `issue_3103.py::repro_3103` |
+| Console log retained | yes (`logs/3103.txt`) |
+| Raw payload retained | no |
+
+## B. Raw console log (logs/3103.txt)
+
+```
+VERDICT=REPRO
+CATEGORY=single-layer
+--- _send_auth_error source ---
+def _send_auth_error(self, send: Send, status_code: int, error: str, description: str) -> None:
+        """Send an authentication error response with WWW-Authenticate header."""
+        # Build WWW-Authenticate header value
+        www_auth_parts = [f'error="{error}"', f'error_description="{description}"']
+        if self.resource_metadata_url:
+            www_auth_parts.append(f'resource_metadata="{self.resource_metadata_url}"')
+
+        www_authenticate = f"Bearer {', '.join(www_auth_parts)}"
+
+        # Send response
+        body = {"error": error, "error_description": description}
+        body_bytes = json.dumps(body).encode()
+
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status_code,
+                "headers": [
+            
+WWW-Authenticate includes scope= param: False
+```

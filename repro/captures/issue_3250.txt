@@ -1,0 +1,61 @@
+# issue: #3250
+# origin_layer: Client
+# exposure_channel: silent
+# evidence_class: silent
+# evidence_tier: B
+# evidence_source: runtime
+# harness_entry: issue_3250.py::repro_3250
+# console_log: logs/3250.txt
+# raw_payload: not retained
+
+## 1. What was run
+
+Harness entry: `issue_3250.py::repro_3250`
+
+Trigger, as recorded during the study:
+
+```text
+storage pre-seeds an expired token (expires_in=-3600) + refresh_token, simulating the first request after a process restart
+```
+
+## 2. What the reporter described
+
+_initialize() only restores current_tokens/client_info from storage and never calls update_token_expiry(), so token_expiry_time stays None; is_token_valid() treats an expired token as valid because of `not self.token_expiry_time`, and so a stale Bearer is emitted directly, with 0 refreshes throughout — transparent refresh fails after a restart.
+
+## 3. What we captured
+
+Captured in our run (evidence tier B).
+
+```
+after _initialize: token_expiry_time=None; is_token_valid()=True (token expired 1h ago); Authorization sent=Bearer at-stale; refresh requests=0; final status=200
+```
+
+## 4. Why it happens
+
+After a process restart, `OAuthClientProvider._initialize()` only restores `current_tokens`/`client_info` from storage and never calls `update_token_expiry()`, so `token_expiry_time` stays None; `is_token_valid()` treats a long-expired token as valid because of `not self.token_expiry_time`, and so a stale Bearer is emitted with 0 refreshes. The failure of the stale credential has no error signal at all — a silent failure (transparent refresh failure).
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Client |
+| Exposure channel | `silent` |
+| Evidence class | `silent` |
+| Evidence tier | B |
+| Error text came from | runtime |
+| Harness entry | `issue_3250.py::repro_3250` |
+| Console log retained | yes (`logs/3250.txt`) |
+| Raw payload retained | no |
+
+## B. Raw console log (logs/3250.txt)
+
+```
+VERDICT=REPRO
+CATEGORY=silent
+stored token: access=at-stale, expires_in=-3600 (already expired)
+after _initialize: current_tokens=True token_expiry_time=None
+is_token_valid() -> True   (expected False for an expired token)
+Authorization actually sent: Bearer at-stale
+refresh (grant_type=refresh_token) requests: 0   (expected >=1)
+final status: 200
+```

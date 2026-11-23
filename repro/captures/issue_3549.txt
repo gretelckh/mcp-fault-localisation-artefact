@@ -1,0 +1,66 @@
+# issue: #3549
+# origin_layer: Server
+# exposure_channel: silent
+# evidence_class: silent
+# evidence_tier: C
+# evidence_source: none
+# harness_entry: run_real_http.py::b_race_lost_update
+# console_log: not retained
+# raw_payload: raw/real_r_race_lost_update.txt
+
+## 1. What was run
+
+Harness entry: `run_real_http.py::b_race_lost_update`
+
+Trigger, as recorded during the study:
+
+```text
+call_tool(inc, {})
+```
+
+## 2. What the reporter described
+
+parallel tool calls mutate shared state; lost update (final<count) is silent [bug #3549]
+
+## 3. What we captured
+
+No error was raised (evidence tier C). The call finished; the defect shows up in
+what came back, not in a diagnostic:
+
+```
+final_after_20_concurrent_calls={'result': 1} n_calls=20 is_error=False
+meta={'io.modelcontextprotocol/serverInfo': {'name': 'real-race', 'version': ''}} content=[TextContent(type='text', text='1', annotations=None, meta=None)] stru
+```
+
+## 4. Why it happens
+
+20 concurrent calls share state, causing lost updates (final=1, should be 20), is_error=False. The concurrent race produces wrong results but no error, which is a silent failure.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Server |
+| Exposure channel | `silent` |
+| Evidence class | `silent` |
+| Evidence tier | C |
+| Error text came from | none |
+| Harness entry | `run_real_http.py::b_race_lost_update` |
+| Console log retained | no |
+| Raw payload retained | yes (`raw/real_r_race_lost_update.txt`) |
+
+## A. Harness progress record
+
+Last record written by the runner for this bug. It is a *runtime trace*, not the
+defect evidence: a bug whose last call returned normally still has an entry here.
+
+```
+verified (run_real_http*.py) - see real_r_race_lost_update.txt
+```
+
+## C. Raw payload (raw/real_r_race_lost_update.txt)
+
+```
+final_after_20_concurrent_calls={'result': 1} n_calls=20 is_error=False
+meta={'io.modelcontextprotocol/serverInfo': {'name': 'real-race', 'version': ''}} content=[TextContent(type='text', text='1', annotations=None, meta=None)] stru
+```

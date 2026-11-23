@@ -1,0 +1,73 @@
+# issue: #3644
+# origin_layer: Server
+# exposure_channel: single-layer-correct
+# evidence_class: single-layer-correct
+# evidence_tier: D
+# evidence_source: none
+# harness_entry: repro_cases.py::case_outputschema_mode
+# console_log: not retained
+# raw_payload: raw/real_r_outputschema_mode.txt
+
+## 1. What was run
+
+Harness entry: `repro_cases.py::case_outputschema_mode`
+
+Trigger, as recorded during the study:
+
+```text
+call_tool(outputschema, {})
+```
+
+## 2. What the reporter described
+
+outputSchema in validation mode but content serialised by alias -> schema mismatch [bug #3644]
+
+## 3. What we captured
+
+No error was raised (evidence tier D). The call finished; the defect shows up in
+what came back, not in a diagnostic:
+
+```
+is_error=False
+advertised_outputSchema={"properties": {"fullTitle": {"title": "Fulltitle", "type": "string"}}, "required": ["fullTitle"], "title": "Out", "type": "object"}
+RAISED:RuntimeError:Invalid structured content returned by tool get: 'fullTitle' is a required property
+
+Failed validating 'requ
+```
+
+## 4. Why it happens
+
+outputSchema is in validation mode but the content is serialised by alias, causing a schema mismatch and throwing RuntimeError. Reported at the Server layer (correct), it is an output schema validation issue.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Server |
+| Exposure channel | `single-layer-correct` |
+| Evidence class | `single-layer-correct` |
+| Evidence tier | D |
+| Error text came from | none |
+| Harness entry | `repro_cases.py::case_outputschema_mode` |
+| Console log retained | no |
+| Raw payload retained | yes (`raw/real_r_outputschema_mode.txt`) |
+
+## A. Harness progress record
+
+Last record written by the runner for this bug. It is a *runtime trace*, not the
+defect evidence: a bug whose last call returned normally still has an entry here.
+
+```
+verified (run_real_http*.py) - see real_r_outputschema_mode.txt
+```
+
+## C. Raw payload (raw/real_r_outputschema_mode.txt)
+
+```
+is_error=False
+advertised_outputSchema={"properties": {"fullTitle": {"title": "Fulltitle", "type": "string"}}, "required": ["fullTitle"], "title": "Out", "type": "object"}
+RAISED:RuntimeError:Invalid structured content returned by tool get: 'fullTitle' is a required property
+
+Failed validating 'required' in schema:
+    {'properties': {'fullTitle': {'title': 'Fulltitle', 'type': 'string'}},
+```

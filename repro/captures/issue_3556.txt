@@ -1,0 +1,63 @@
+# issue: #3556
+# origin_layer: Transport
+# exposure_channel: caller-exception
+# evidence_class: caller-exception
+# evidence_tier: A
+# evidence_source: issue text
+# harness_entry: run_real_http.py::b_terminate_reinit
+# console_log: not retained
+# raw_payload: raw/real_r_session_reinit_404.txt
+
+## 1. What was run
+
+Harness entry: `run_real_http.py::b_terminate_reinit`
+
+Trigger, as recorded during the study:
+
+```text
+call_tool(ping, {})
+```
+
+## 2. What the reporter described
+
+client treats a 404 (dead session) as terminal instead of re-initialising [bug #3556]
+
+## 3. What we captured
+
+Quoted from the issue report; our replay did not raise it again (evidence tier A).
+
+```
+RAISED:ExceptionGroup:unhandled errors in a TaskGroup (1 sub-exception)
+```
+
+## 4. Why it happens
+
+The client treats 404 (dead session) as terminal rather than reinitialising, throwing an `ExceptionGroup` (bare exception). A Transport-layer error is exposed as a bare exception to the caller — a bare-exception-to-caller channel.
+
+## 5. Provenance
+
+| Field | Value |
+|---|---|
+| Origin layer | Transport |
+| Exposure channel | `caller-exception` |
+| Evidence class | `caller-exception` |
+| Evidence tier | A |
+| Error text came from | issue text |
+| Harness entry | `run_real_http.py::b_terminate_reinit` |
+| Console log retained | no |
+| Raw payload retained | yes (`raw/real_r_session_reinit_404.txt`) |
+
+## A. Harness progress record
+
+Last record written by the runner for this bug. It is a *runtime trace*, not the
+defect evidence: a bug whose last call returned normally still has an entry here.
+
+```
+verified (run_real_http*.py) - see real_r_session_reinit_404.txt
+```
+
+## C. Raw payload (raw/real_r_session_reinit_404.txt)
+
+```
+RAISED:ExceptionGroup:unhandled errors in a TaskGroup (1 sub-exception)
+```
